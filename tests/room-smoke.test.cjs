@@ -64,3 +64,43 @@ test('saving a remix stores actual colored artwork, provenance and layers, not o
 test('offline file mode honestly disables online audio transcription',()=>{const {run}=runtime();run("location={protocol:'file:'};WORK.status={voiceConfigured:true}");assert.equal(run('window.XDPVoice.available()'),false);assert.match(run('window.XDPVoice.support()'),/离线文件/);});
 test('requested background colors reach the rendered artwork rather than remaining preset-only text',()=>{const {run}=runtime();const svg=run("assistantDraftSVG(AssistantTools.localPlan({goal:'把海报背景改成 #FFCCAA'}))");assert.match(svg,/fill="#FFCCAA"/);assert.equal(run("AssistantTools.normalizePlan({colors:{background:'#E6DDF3'}},{goal:'背景#123ABC'}).colors.background"),'#123ABC');const named=run("assistantDraftSVG(AssistantTools.localPlan({goal:'背景改成蓝色'}))");assert.match(named,/fill="#DDEFFA"/);assert.equal(run("AssistantTools.normalizePlan({colors:{background:'javascript:bad'}},{goal:'背景#112233'}).colors.background"),'#112233');});
 test('late events from a cancelled recorder cannot stop a newer recording',async()=>{const {run}=runtime();run("location={protocol:'http:'};WORK.status={voiceConfigured:true};WORK.voiceConsent=true;instances=[];streams=[];window.MediaRecorder=MediaRecorder=class{static isTypeSupported(){return true}constructor(){this.state='inactive';instances.push(this)}start(){this.state='recording'}stop(){this.state='inactive'}};navigator.mediaDevices={getUserMedia:async()=>{const track={count:0,stop(){this.count++}};streams.push(track);return {getTracks:()=>[track]}}}");await run('startWorkVoice()');run('stopWorkVoice()');await run('startWorkVoice()');run("instances[0].onstop();instances[0].ondataavailable({data:{size:1}})");assert.equal(run('WORK.listening'),true);assert.equal(run('streams[1].count'),0);run('stopWorkVoice()');assert.equal(run('streams[1].count'),1);});
+
+
+test('source checkboxes update the count and invalidate consent without rebuilding the workspace',()=>{
+ const {run,nodes,listeners}=runtime();
+ nodes['#assistant-source-count']={textContent:''};
+ nodes['#assistant-consent']={checked:true};
+ nodes['[data-act="work-run"]']={disabled:false,textContent:''};
+ nodes['#assistant-generation-label']={textContent:''};
+ nodes['#assistant-dirty-notice']={hidden:true};
+ run("WORK.engine='online';WORK.status={configured:true};WORK.consent=true;WORK.voiceConsent=true;WORK.plan=AssistantTools.localPlan({goal:'old'});paintAssistant=()=>{throw Error('must not repaint')}");
+ const change=checked=>{for(const fn of listeners.change||[])fn({target:{id:'',dataset:{workSource:'P1'},checked,closest:()=>null}});};
+ change(true);
+ assert.equal(run("WORK.selected.has('P1')"),true);
+ assert.equal(nodes['#assistant-source-count'].textContent,'已选 1 条');
+ assert.equal(run('WORK.dirty'),true);
+ assert.equal(nodes['#assistant-dirty-notice'].hidden,false);
+ assert.equal(run('WORK.consent'),false);
+ assert.equal(nodes['#assistant-consent'].checked,false);
+ assert.equal(nodes['[data-act="work-run"]'].disabled,true);
+ assert.match(nodes['#assistant-generation-label'].textContent,/待授权/);
+ assert.equal(run('WORK.voiceConsent'),true);
+ change(false);
+ assert.equal(run("WORK.selected.has('P1')"),false);
+ assert.equal(nodes['#assistant-source-count'].textContent,'选填');
+});
+
+test('text consent toggles the existing run button without repainting or bypassing connection and busy guards',()=>{
+ const {run,nodes,listeners}=runtime();
+ nodes['[data-act="work-run"]']={disabled:true};
+ nodes['#assistant-generation-label']={textContent:''};
+ run("WORK.engine='online';WORK.status={configured:true};paintAssistant=()=>{throw Error('must not repaint')}");
+ const change=checked=>{for(const fn of listeners.change||[])fn({target:{id:'assistant-consent',dataset:{},checked,closest:()=>null}});};
+ change(true);assert.equal(run('WORK.consent'),true);assert.equal(nodes['[data-act="work-run"]'].disabled,false);
+ assert.match(nodes['#assistant-generation-label'].textContent,/已授权/);
+ change(false);assert.equal(nodes['[data-act="work-run"]'].disabled,true);
+ for(const state of ["WORK.status={configured:false}","WORK.status={configured:true};WORK.busy=true","WORK.busy=false;WORK.listening=true"]){
+  run(state);change(true);assert.equal(nodes['[data-act="work-run"]'].disabled,true);
+ }
+ run("WORK.listening=false;WORK.engine='local'");change(false);assert.equal(nodes['[data-act="work-run"]'].disabled,false);
+});

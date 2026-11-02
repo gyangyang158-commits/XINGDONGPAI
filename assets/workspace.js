@@ -136,7 +136,7 @@ studioMaterialPreview=function(p){return p.draftSvg||workLegacy.studioMaterialPr
 artSVG=function(p,opts){return p.draftSvg||workLegacy.artSVG(p,opts);};
 function assistantSourcesHTML(ctx){
  const selected=S.pool.filter(m=>WORK.selected.has(m.id)),available=[...selected,...S.pool.filter(m=>!WORK.selected.has(m.id))].slice(0,12);
- return `<details class="assistant-source-options" id="assistant-sources-details"><summary>参考灵感 <span>${ctx.materials.length?'已选 '+ctx.materials.length+' 条':'选填'}</span></summary><p class="work-note">仅使用勾选素材的文字；原图不发送给模型。</p><div class="source-list">${available.length?available.map(m=>`<label><input type="checkbox" data-work-source="${esc(m.id)}" ${WORK.selected.has(m.id)?'checked':''} ${WORK.busy||WORK.listening?'disabled':''}><span><b>${esc(m.name)}</b><small>${esc(m.id)}${m.kind==='up'&&!m.dataUrl?' · 原图缺失':''}</small></span></label>`).join(''):'<p class="work-note">灵感池还没有素材，直接写下需求也可以开始。</p>'}</div></details>`;
+ return `<details class="assistant-source-options" id="assistant-sources-details"><summary>参考灵感 <span id="assistant-source-count" aria-live="polite">${ctx.materials.length?'已选 '+ctx.materials.length+' 条':'选填'}</span></summary><p class="work-note">仅使用勾选素材的文字；原图不发送给模型。</p><div class="source-list">${available.length?available.map(m=>`<label><input type="checkbox" data-work-source="${esc(m.id)}" ${WORK.selected.has(m.id)?'checked':''} ${WORK.busy||WORK.listening?'disabled':''}><span><b>${esc(m.name)}</b><small>${esc(m.id)}${m.kind==='up'&&!m.dataUrl?' · 原图缺失':''}</small></span></label>`).join(''):'<p class="work-note">灵感池还没有素材，直接写下需求也可以开始。</p>'}</div></details>`;
 }
 function assistantSettingsHTML(){
  const online=WORK.engine==='online',configured=WORK.status?.configured;
@@ -168,6 +168,12 @@ function refreshAssistantCopy(renderPreview=true){
  const button=document.querySelector('[data-act="work-adopt"]');if(button){button.disabled=WORK.busy||WORK.dirty||!!WORK.posted&&!WORK.copyDirty;button.textContent=assistantAdoptLabel();}
  const status=$('#assistant-publication-status');if(status)status.textContent=WORK.posted&&WORK.copyDirty?'有未发布的文字修改，原卡片暂未改变。':WORK.notice||'';
  const dirtyNotice=$('#assistant-dirty-notice');if(dirtyNotice)dirtyNotice.hidden=!WORK.dirty;
+ refreshAssistantRequestControls();
+}
+// Checkbox changes update existing controls only: keep focus, list order and animations intact.
+function refreshAssistantRequestControls(){
+ const count=$('#assistant-source-count');if(count){const n=assistantContext().materials.length;count.textContent=n?'已选 '+n+' 条':'选填';}
+ const run=document.querySelector('[data-act="work-run"]');if(run)run.disabled=WORK.busy||WORK.listening||WORK.engine==='online'&&(!WORK.status?.configured||!WORK.consent);
  const modeLabel=$('#assistant-generation-label');if(modeLabel)modeLabel.textContent=WORK.engine==='online'?!WORK.status?.configured?'在线 AI · 未连接':WORK.consent?'在线 AI · 已授权':'在线 AI · 待授权':'本地排版 · 不联网';
 }
 async function checkAssistantServer(){
@@ -237,9 +243,9 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
  const input=e.target;
  if(input.id==='assistant-engine'){WORK.engine=input.value;WORK.consent=false;WORK.forceSettingsOpen=WORK.engine==='online';paintAssistant();}
- if(input.id==='assistant-consent'){WORK.consent=input.checked;paintAssistant();}
+ if(input.id==='assistant-consent'){WORK.consent=input.checked;refreshAssistantRequestControls();}
  if(input.id==='voice-consent')WORK.voiceConsent=input.checked;
- if(input.dataset.workSource){if(input.checked)WORK.selected.add(input.dataset.workSource);else WORK.selected.delete(input.dataset.workSource);markAssistantRequestDirty();paintAssistant();}
+ if(input.dataset.workSource){if(input.checked)WORK.selected.add(input.dataset.workSource);else WORK.selected.delete(input.dataset.workSource);markAssistantRequestDirty();}
 });
 function workLocatePublished(view,id){
  stopWorkVoice();clearWorkOverlays();WORK.page=null;S.stage=2;S.boardView=view;S.browseUnlocked=true;S.browseByMember[ME]=true;render();
