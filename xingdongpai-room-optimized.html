@@ -3005,40 +3005,24 @@ body.gate-flow .hop-tag { font-size: 11.5px; }
 .cs-opt[role="button"]:focus-visible,.sv-item:focus-visible,.gh-part:focus-visible,.btn:focus-visible{outline:3px solid var(--vio);outline-offset:3px}
 @media (prefers-reduced-motion: reduce){.step.live .step-num,.pchip.bump{animation:none!important}}
 </style>
+<link rel="stylesheet" href="assets/studio.css">
+<link rel="stylesheet" href="assets/workspace.css">
+<link rel="stylesheet" href="assets/remix.css">
+<link rel="stylesheet" href="assets/effects/atmosphere.css">
 
+<div class="studio-shell">
+<aside class="studio-sidebar" id="studio-sidebar" aria-label="项目导航"></aside>
 <div class="main" id="main">
   <header class="topbar">
-    <div class="mini-capsule" aria-hidden="true"><span>···</span><span>⊙</span></div>
-    <div class="brand" data-act="home">
-      <span class="brand-logo">🌊</span>
-      <span>星动派 · 共创房间</span>
-      <span class="ver-tag">V4.7 · 演示</span>
-    </div>
-    <div class="proj">
-      <span class="proj-title">赵露思 · 生日生咖应援海报</span>
-      <span class="tag tag-gold">交互优化试版</span>
-    </div>
+    <div class="studio-crumb"><span>赵露思生日生咖</span><span>/</span><b id="studio-location">项目概览</b></div>
     <div class="topbar-spacer"></div>
-    <div class="presence" id="presence"></div>
-    <button class="quest-chip" data-act="open-quests" id="quest-chip" title="任务与徽章">🎯 任务</button>
-    <button class="lv-ring" data-act="open-quests" id="lv-ring" title="房间等级"></button>
-    <button class="pts-chip heart-chip" data-act="open-me" id="pts-chip" title="共创小组的爱心池 · 填满 300 加印 50 份">
-      <span class="hmini" aria-hidden="true">❤</span>
-      <b id="heart-chip-num">128</b>
-      <span class="pts-unit">/ 300</span>
-    </button>
-    <button class="seat-btn" data-act="invite" title="分享这个房间给同担">
-      <span>🪑</span><span class="txt">还差 1 人成团</span>
-    </button>
-    <button class="who-switch" data-act="switch-me" id="who-switch" title="切换演示视角">
-      <span id="who-switch-name">Yao.</span><span class="ws-arrow">⇄</span>
-    </button>
-    <button class="btn btn-sm chat-toggle" data-act="toggle-chat" title="群聊同步">
-      💬 群聊<span class="badge-dot" id="chat-dot"></span>
-    </button>
+    <button class="who-switch" data-act="switch-me" id="who-switch" title="仅演示：切换参与者与主办"><span id="who-switch-name">Yao.</span><span aria-hidden="true">⇄</span></button>
+    <button class="btn btn-ghost btn-sm chat-toggle" data-act="toggle-chat" title="本地讨论记录">讨论记录<span class="badge-dot" id="chat-dot"></span></button>
   </header>
   <div class="stage-host" id="stage-host"></div>
 </div>
+</div>
+<nav id="studio-mobile-nav" aria-label="移动端工作区导航"></nav>
 
 <aside class="chat-drawer" id="chat-drawer">
   <div class="chat-hd">
@@ -3108,7 +3092,8 @@ body.gate-flow .hop-tag { font-size: 11.5px; }
 let ME = 'yao';   // 当前视角：yao=群友 / lu=主办（演示时可切）
 
 const S = {
-  stage: 0,
+  stage: 1,
+  boardLayout: 'grid',
   chatOpen: false,
   me: ME,
 
@@ -3292,7 +3277,7 @@ const nowTime = () => {
 };
 const avatar = (id, cls = '') => {
   const p = P(id);
-  return `<i class="av ${cls}" style="background:linear-gradient(145deg,${p.color}55,${p.color}22);border-color:${p.color}66" title="${esc(p.name)}">${esc(p.emoji)}</i>`;
+  return `<i class="av ${cls}" title="${esc(p.name)}" aria-label="${esc(p.name)}">${esc(p.name.replace(/^[*\s]+/, '').slice(0, 1).toUpperCase())}</i>`;
 };
 /** 头像栈：最多 n 个 +“＋N”，永不显示纯数字 */
 function avStack(ids, n = 4, cls = '') {
@@ -3586,7 +3571,7 @@ function renderSplash() {
       </svg>
       <div class="sp-inner">
         <div class="sp-badge">✨ 星动派 · 生日生咖共创房</div>
-        <div class="sp-date">09 · 16</div>
+        <div class="sp-date">11 · 09</div>
         <h1 class="sp-title">赵露思<br><span class="hl">生日快乐</span></h1>
         <div class="sp-sub">这一年的生咖海报，由我们和 AI 一起画</div>
         <button class="sp-go">点亮这间房，从你的灵感开始 →</button>
@@ -3673,8 +3658,8 @@ function renderGateView() {
     <div class="gh-brief">
       <div class="gb-line">
         <span class="gb-ico">🎂</span>
-        <div><b>给赵露思的 26 岁生日，做一张生咖应援海报</b>
-          <small>9 月 16 日生日 · 生咖门店现场；来的人会看到它，也会跟它合影</small></div>
+        <div><b>给赵露思的生日，做一张生咖应援海报</b>
+          <small>11 月 9 日生日 · 生咖门店现场；来的人会看到它，也会跟它合影</small></div>
       </div>
       <div class="gb-line">
         <span class="gb-ico">🎯</span>
@@ -3703,7 +3688,7 @@ function renderGateView() {
     <text x="150" y="86" text-anchor="middle" font-size="30" font-weight="900" fill="#3E4A63" letter-spacing="2">赵露思</text>
     <text x="150" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="#7C93AE" letter-spacing="5">HAPPY BIRTHDAY</text>
     <line x1="120" y1="134" x2="180" y2="134" stroke="#C9DCEE" stroke-width="1.5"/>
-    <text x="150" y="152" text-anchor="middle" font-size="11" fill="#93A8C0">09 · 16 生日生咖</text>
+    <text x="150" y="152" text-anchor="middle" font-size="11" fill="#93A8C0">11 · 09 生日生咖</text>
     <!-- 主视觉区：人物剪影 -->
     <g opacity=".92">
       <path d="M150 206 c17 0 30 14 30 31 c0 18 -14 32 -30 32 c-17 0 -30 -14 -30 -32 c0 -17 13 -31 30 -31 z" fill="#8FB0D2"/>
@@ -3725,7 +3710,7 @@ function renderGateView() {
     </g>
     <!-- 底部信息条 -->
     <rect x="40" y="430" width="220" height="34" rx="17" fill="#FFFFFF" fill-opacity=".62"/>
-    <text x="150" y="452" text-anchor="middle" font-size="10.5" fill="#7C93AE">9.16 · 生咖见 · 一起过</text>
+    <text x="150" y="452" text-anchor="middle" font-size="10.5" fill="#7C93AE">11.09 · 生咖见 · 一起过</text>
     <text x="150" y="500" text-anchor="middle" font-size="8.5" fill="#9FB3C9" letter-spacing="1">FAN PROJECT · 2026</text>
   </svg>`;
   const parts = `
@@ -6357,31 +6342,29 @@ function paintSubmit() {
 
   const tab = st.tab || 'tpl';
 
-  const TABS = tab === 'upload' ? [
-    { k: 'upload', e: '📷', t: '手搓内容', n: '直接拖图上传' },
-    { k: 'agent', e: '🧋', t: '设计助手', n: '说感觉 · 出灵感' }
-  ] : [
-    { k: 'tpl',   e: '🎨', t: '选模板素材', n: '按海报构成挑' },
-    { k: 'agent', e: '🧋', t: 'AI 助手',    n: '传图 · 生图 · 出灵感' }
+  const TABS = st.target === 'review' ? [{ k: 'upload', e: '', t: '上传稿件', n: '原图与手绘' }] : [
+    { k: 'tpl', e: '', t: '选模板', n: '现成参考' },
+    { k: 'upload', e: '', t: '上传作品', n: '原图与手绘' },
+    { k: 'agent', e: '', t: '整理想法', n: '三步问答' }
   ];
   const HINTS = {
-    tpl: '一张海报 = 主视觉 + 版式 + 元素 + 文案，分类就是按这个来的',
-    agent: '传图帮你抠 / 说感觉帮你生 / 没想法帮你出灵感 —— 都在本期共创范围内',
-    upload: '已有图片直接拖入，补一句说明后就能投进灵感池'
+    tpl: '选择一套完整的版式参考，确认后加入本地灵感池',
+    agent: '按三个问题整理你的想法（本地演示）',
+    upload: '图片仅保存在本页面，不会发送到服务器或真实群聊'
   };
   const BASE = { tpl: 8, agent: 12 };
 
-  const gateFlow = !S.myCard;
+  const gateFlow = !S.myCard && ['ai','agent'].includes(tab);
   host.innerHTML = `
     <div class="submit-mask" data-act="close-submit"></div>
     <div class="submit" id="submit-panel">
       <div class="submit-hd">
         <div class="grow">
-          <div class="ttl">${gateFlow ? '交一张灵感卡 · 三步' : '我要提供素材'}</div>
+          <div class="ttl">${gateFlow ? '整理灵感卡 · 三步' : tab === 'upload' ? '提交已有作品' : tab === 'tpl' ? '挑一张海报模板' : '提供共创素材'}</div>
           <div style="font-size:12px;color:var(--text-mute);margin-top:2px">
             ${gateFlow
               ? '我问，你自己说 —— 我不给答案；说完拿图对一次方向，三个问题整理成一份灵感卡'
-              : '你是 <b style="color:var(--pink-soft)">Yao.</b> · 挑现成的，或让 AI 助手带你走完'}
+              : `你是 <b style="color:var(--pink-soft)">${esc(P(ME).name)}</b> · ${tab === 'upload' ? '保留原图和你的说明，确认后加入本地灵感池' : '选择现成素材，或把想法整理成卡片'}`}
           </div>
         </div>
         <button class="btn btn-sm btn-ghost" data-act="close-submit">✕</button>
@@ -6694,7 +6677,7 @@ function joinCarpool(el) {
 /* -------- 提交：把选中的东西变成素材墙上的一张新卡 -------- */
 function doSubmit(el) {
   const st = S.submit;
-  if (!st) return;
+  if (!st || st.view === 'posted' || st.uploadBusy) return;
   const tab = st.tab || 'tpl';
   const isTpl = tab === 'tpl';
   const isUp = tab === 'up' || tab === 'upload';
@@ -6717,7 +6700,7 @@ function doSubmit(el) {
     const pid = 'P' + (S.pool.length + 1);
     addPool({
       id: pid, cat: 'visual', kind: 'up', name: u.name, note: (st.upNote || '').trim() || u.tag,
-      by: ME, likes: [], cmts: [], vibe: u.vibe || 'b1', pose: u.pose || 'front', taken: false
+      by: ME, likes: [], cmts: [], vibe: u.vibe || 'b1', pose: u.pose || 'front', taken: false, dataUrl: u.dataUrl, width: u.width, height: u.height
     }, base, {
       chatMine: `我传了张自己的图（${u.name}）进灵感池，${(st.upNote || '').trim() || u.tag}`,
       chatSys: `Yao. 投喂了灵感池 → ${pid} · +${base} 颗心`,
@@ -6743,6 +6726,7 @@ function doSubmit(el) {
     addPool({
       id: 'P' + (S.pool.length + 1), cat: isTpl ? 'tpl' : 'element', kind: isTpl ? 'tpl' : 'ai',
       name: isTpl ? tpl.name : ((st.genKw || 'AI 方向') + ''),
+      templateId: isTpl ? tpl.id : null, posterKey: isTpl ? tpl.posterKey : null,
       note: isTpl ? `选了「${tpl.name}」这个版式打底` : `AI 方向 · ${(st.genKw || '').slice(0, 10)}`,
       by: ME, likes: [], cmts: [],
       vibe: isTpl ? ({ sky: 'b1', cool: 'b11', dusk: 'b6', sunset: 'b2' }[tpl.theme] || 'b1') : ['b1', 'b2', 'b5'][st.picked],
@@ -6992,7 +6976,7 @@ const SEED_TYPE_MAP = Object.fromEntries(SEED_TYPES.map((t) => [t.k, t]));
 const TYPE_HOPS = {
   visual: [
     { k:'story', e:'①', name:'回到那天', mode:'text',
-      scene:'🎬 假设现在就是 9 月 16 号下午三点半。你和同担站在生咖门口，玻璃门里面是刚摆好的气球墙，外面还排着几个人。你推门进去那一刻——',
+      scene:'🎬 假设现在就是 11 月 9 号下午三点半。你和同担站在生咖门口，玻璃门里面是刚摆好的气球墙，外面还排着几个人。你推门进去那一刻——',
       q:'先说<b>你自己印象最深的一个画面</b>：那天你亲眼见过、或者特别想看到的一个瞬间是什么？',
       hint:'不用想得好，想到什么说什么；是你自己的记忆最好，哪怕很碎',
       placeholder:'比如：她笑起来眼睛弯的 / 门口气球被风吹得一晃一晃 / 有人举着灯牌在等',
@@ -7004,7 +6988,7 @@ const TYPE_HOPS = {
       imgOpts:[{t:'清透日光 · 浅蓝衬衫',k:'shirt',vibe:'b2',pose:'front'},{t:'柔光白杂点 · 大留白',k:'softblue',vibe:'b2',pose:'full'},{t:'水光浅青 · 暖一点',k:'aqua',vibe:'b11',pose:'cool'}],
       imgOptsBy:{
         warm:[{t:'暖金糖水光 · 发丝发光',k:'w4',vibe:'b3',pose:'front'},{t:'逆光剪影 · 颗粒胶片',k:'w6',vibe:'b9',pose:'cool'},{t:'灯光暖黄 · 室内氛围',k:'w7',vibe:'b11',pose:'full'}],
-        calm:[{t:'浅蓝大留白 · 人很小',k:'w5',vibe:'b2',pose:'full'},{t:'冷调清晨 · 干净通透',k:'w8',vibe:'b2',pose:'side'},{t:'纯白背景 · 只有她',k:'w9',vibe:'b2',pose:'front'}],
+        calm:[{t:'露紫花笺 · 花束留白',k:'w5',vibe:'b2',pose:'full'},{t:'露紫晨雾 · 自然通透',k:'w8',vibe:'b2',pose:'side'},{t:'相册留白 · 原图待替换',k:'w9',vibe:'b2',pose:'front'}],
         crowd:[{t:'人群举灯牌 · 热闹',k:'w1',vibe:'b3',pose:'full'},{t:'气球墙前 · 合影感',k:'w2',vibe:'b5',pose:'front'},{t:'背影走向门口 · 故事感',k:'w3',vibe:'b2',pose:'side'}]
       } },
     { k:'word', e:'③', name:'最后一句', mode:'text',
@@ -7015,7 +6999,7 @@ const TYPE_HOPS = {
   ],
   tpl: [
     { k:'story', e:'①', name:'回到那天', mode:'text',
-      scene:'🎬 还是 9 月 16 号。你推门进生咖，先看到的不是整张海报，是<b>远处墙上贴着的一张</b>——你得走过两三步才看清上面是什么。',
+      scene:'🎬 还是 11 月 9 号。你推门进生咖，先看到的不是整张海报，是<b>远处墙上贴着的一张</b>——你得走过两三步才看清上面是什么。',
       q:'那两三步里，你希望<b>眼睛先被什么抓住</b>？说你自己进店时的真实反应。',
       hint:'一个人、一句话、一片颜色都行，说你的直觉',
       placeholder:'比如：先看到她的脸 / 先看到「生日快乐」四个字 / 先被整片蓝色抓住',
@@ -7060,7 +7044,7 @@ const TYPE_HOPS = {
   ],
   copy: [
     { k:'story', e:'①', name:'回到那天', mode:'text',
-      scene:'🎬 9 月 16 号傍晚，人散了一些，你还站在生咖门口没走。海报就贴在你身后的玻璃上，字朝着门外。<b>你在心里跟她说了一句话</b>——',
+      scene:'🎬 11 月 9 号傍晚，人散了一些，你还站在生咖门口没走。海报就贴在你身后的玻璃上，字朝着门外。<b>你在心里跟她说了一句话</b>——',
       q:'那句话是什么？<b>就按你当时心里冒出来的原话说</b>，别修饰。',
       hint:'想到什么说什么，土一点也没关系，我帮你收',
       placeholder:'比如：今年也在 / 生日快乐啊 / 又长大一岁啦',
@@ -7305,15 +7289,15 @@ function paintShotVote(){
         <div class="grow"></div>
         <button class="btn btn-sm btn-ghost" data-act="close-shotvote" aria-label="关闭投票">✕</button>
       </div>
-      <div class="cs-note">这 3 张来自「<b>${esc(dir.name || '')}</b>」。每位成员一票，截止前可改票；至少 5 位参与后由主办截止。<b>投票推荐稿不是最终版。</b></div>
+      <div class="cs-note">这 3 张来自「<b>${esc(dir.name || '')}</b>」。每位成员一票，截止前可改票且不公开各稿票数；至少 5 位参与后由主办截止。<b>投票推荐稿不是最终版。</b></div>
       <div class="cs-note" aria-live="polite">${C.voted ? (winner ? `投票已截止 · 推荐「${esc(winner.kw)}」${C.tieBreak ? '（平票由主办裁决）' : ''}` : '投票已截止 · 平票，等待主办裁决') : `已投 ${total}/5 票${myVote ? ' · 你已投，可在截止前修改' : ' · 你还未投票'}`}${C.demoLoaded ? ' · 含显式载入的演示票' : ''}</div>
       <div class="sv-grid ${C.voted ? 'done' : ''}">
         ${shots.map((shot) => `
-          <button type="button" class="sv-item ${myVote === shot.id ? 'mine' : ''} ${winner && winner.id === shot.id ? 'win' : ''}" data-act="shotvote-pick" data-id="${shot.id}" ${C.voted || !S.myCard ? 'disabled' : ''} aria-label="投 ${esc(shot.kw)}，目前 ${shot.votes} 票">
+          <button type="button" class="sv-item ${myVote === shot.id ? 'mine' : ''} ${winner && winner.id === shot.id ? 'win' : ''}" data-act="shotvote-pick" data-id="${shot.id}" ${C.voted || !S.myCard ? 'disabled' : ''} aria-label="投 ${esc(shot.kw)}${C.voted ? '，' + shot.votes + ' 票' : '，截止后公开票数'}">
             <span class="pic">${shot.svg}</span>
             <span class="ft"><b>${esc(shot.kw.replace(/^新稿 \d · /, ''))}</b>
-              <span class="bar"><i style="width:${total ? Math.round(shot.votes / total * 100) : 0}%"></i></span>
-              <span class="n">${shot.votes} 票${myVote === shot.id ? ' · 我的选择' : ''}</span>
+              ${C.voted ? `<span class="bar"><i style="width:${total ? Math.round(shot.votes / total * 100) : 0}%"></i></span>` : ''}
+              <span class="n">${C.voted ? shot.votes + ' 票' : '截止后公开票数'}${myVote === shot.id ? ' · 我的选择' : ''}</span>
             </span>
             ${C.voted ? `<span class="sv-flag ${winner && winner.id === shot.id ? 'win' : ''}">${winner && winner.id === shot.id ? '🏆 推荐稿' : !winner && tied.some((x) => x.id === shot.id) ? '平票待裁决' : '存档'}</span>` : `<span class="btn ${myVote === shot.id ? 'btn-primary' : 'btn-ghost'} btn-sm">${myVote === shot.id ? '已投 · 可改' : '投这张'}</span>`}
           </button>`).join('')}
@@ -7653,14 +7637,12 @@ document.addEventListener('click', (e) => {
       S.stage = Number(el.dataset.to);
       render(); break;
     case 'enter-room':
-      S.stage = 2; S.boardView = 'done'; render();
+      S.stage = 2; S.boardView = 'pool'; S.browseUnlocked = true; S.browseByMember[ME] = true; render();
       // 先展示任务简报，由参与者自己选择模块。
       break;
     case 'gate-start-direct':
       // 入口页只负责把用户带到灵感池；无需再经过模块说明卡。
-      S.myCard = true;
       S.browseUnlocked = true;
-      S.cardByMember[ME] = true;
       S.browseByMember[ME] = true;
       S.boardView = 'pool';
       render();
@@ -7680,6 +7662,7 @@ document.addEventListener('click', (e) => {
 
     /* ---- v2 群友视角 ---- */
     case 'open-seed': {
+      S.inspirationChoiceOpen = false;
       // 投灵感 = 直接走灵感卡流程（选模块 → 三个问题），不进旧提交面板
       closeSheetIfAny();
       openSubmit('ai');
@@ -7711,6 +7694,7 @@ document.addEventListener('click', (e) => {
       // 中途关掉又回来：接着上一轮继续，不重头问
       const d = S.seed || {};
       if (!d.type) { toast('还没选模块 · 回任务页挑一个'); break; }
+      if (!S.submit) openSubmit('ai');
       if (!S.agent) agentInit('gen', false);
       paintSubmit(); paintAgentHosts();
       document.body.classList.add('gate-flow');
@@ -7720,7 +7704,7 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'close-submit':
-      S.agent = null; closeSubmit(); break;
+      S.agent = null; closeSubmit(); if (S.stage === 2) render(); break;
     case 'submit-tab':
       if (S.submit) { S.submit.tab = el.dataset.tab; paintSubmit(); } break;
 
@@ -7898,7 +7882,7 @@ document.addEventListener('click', (e) => {
       pushChat({ sys: true, text: `🗳 「${win.kw.replace(/^新稿 \d · /, '')}」以 ${win.votes} 票成为推荐稿，已加入成品池 → ${nid}；最终版待主办确认` });
       S.cons.step = 4;
       closeShotVote();
-      if (S.stage === 2 && S.boardView === 'done') render();
+      if (S.stage === 2) render();
       paintConsensus();
       toast(`推荐稿已加入成品池 → ${nid}；尚未最终定稿`);
       break;
@@ -8642,6 +8626,12 @@ function boot() {
 
 boot();
 </script>
+<script src="assets/posters.js"></script>
+<script src="assets/studio.js"></script>
+<script src="assets/assistant-core.js"></script>
+<script src="assets/workspace.js"></script>
+<script src="assets/remix.js"></script>
+<script src="assets/voice.js"></script>
+<script src="assets/effects/atmosphere.js"></script>
 </body>
 </html>
-
