@@ -4,3 +4,11 @@
 @media(max-width:900px){.scene-tea-layout{grid-template-columns:minmax(0,1fr)}.scene-editor-layout{grid-template-columns:minmax(240px,.9fr) minmax(0,1fr);gap:18px}.scene-paper{padding:20px}.scene-resource-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.scene-session{display:none}.scene-heading h1{font-size:29px}}
 @media(max-width:620px){.scene-editor-layout{grid-template-columns:minmax(0,1fr)}.scene-path{gap:2px;justify-content:space-between}.scene-path button{padding:8px 5px;gap:5px;font-size:11px;flex-direction:column}.scene-heading{margin-bottom:18px}.scene-heading p{font-size:12px}.scene-paper{padding:18px;border-radius:13px}.scene-art{padding:12px;max-width:390px}.scene-tip-list{grid-template-columns:minmax(0,1fr)}.scene-resource-grid{grid-template-columns:minmax(0,1fr)}.scene-section-heading h2,.scene-paper h2{font-size:19px}.scene-feed{max-height:380px;min-height:230px}.scene-bubble{max-width:95%}.scene-form .input,.scene-controls .input{font-size:16px}.scene-content{overflow-wrap:anywhere}.scene-summary-empty{margin:24px 0;gap:14px}.scene-actions .btn{flex:1 1 auto}.scene-path button span{font-size:9px}.scene-stickers svg{width:40px;height:40px}.scene-art>svg{max-height:none}}
 @media(prefers-reduced-motion:reduce){.scene-content,.scene-content *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+#scene-join-preview [data-puzzle-layer]{cursor:grab;touch-action:none;user-select:none;outline:none}
+#stage-host[data-scene-page="join"]{position:relative;z-index:1}
+#stage-host[data-scene-page="join"] .scene-content{opacity:1!important;animation:none!important;transform:none!important}
+#scene-join-preview [data-puzzle-layer]:active{cursor:grabbing}
+#scene-join-preview [data-puzzle-layer]:focus-visible{filter:drop-shadow(0 0 3px #9875B6)}
+#puzzle-font{width:100%;min-height:44px;accent-color:#9875B6}
+[data-puzzle-frame]{min-height:44px}
