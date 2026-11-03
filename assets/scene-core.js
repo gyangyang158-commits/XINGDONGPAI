@@ -1,7 +1,7 @@
 /* Shared, deterministic scene actions. No network or hidden user profiling. */
 (function(root){
  'use strict';
- const scenes=[{id:'tea',name:'茶话室',icon:'message',tag:'一起聊出好想法'},{id:'look',name:'看图共创',icon:'image',tag:'@ 助手，把喜欢放进画面'},{id:'join',name:'极简拼图',icon:'heart',tag:'一张照片，一句祝福'},{id:'decision',name:'决策间',icon:'check',tag:'加一点，减一点，Bingo'}];
+ const scenes=[{id:'tea',name:'场景1 茶话室',icon:'message',tag:'一起聊出好想法'},{id:'look',name:'场景2 看图共创',icon:'image',tag:'@ 助手，把喜欢放进画面'},{id:'join',name:'场景3 极简拼图',icon:'heart',tag:'一张照片，一句祝福'},{id:'decision',name:'场景4 决策间',icon:'check',tag:'加一点，减一点，Bingo'}];
  const tips=[
   {id:'space',title:'留白不是空着',sub:'给主角一点呼吸的位置',body:'先找出画面里最重要的人物或标题，再减少它周围的干扰。留白可以在四周，也可以只留在人物视线朝向的一侧。',steps:['选一个主角，不让所有元素同样大。','让文字避开人脸，沿一条线对齐。','缩小看一眼，先看见的还是主角吗？'],layout:'editorial'},
   {id:'stickers',title:'贴纸很多，也可以不乱',sub:'把装饰当成一组，而不是撒满',body:'先把贴纸集中在一个区域，再用大小差别拉开主次。贴纸是陪衬，可以少量重复，不必每个角落都填满。',steps:['先留下一组最喜欢的贴纸。','让其中一枚更大，其余做陪衬。','比较减少一枚后的效果，保留更舒服的一版。'],layout:'frame'},
