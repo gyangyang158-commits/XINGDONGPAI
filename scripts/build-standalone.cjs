@@ -10,7 +10,7 @@ if(!html.includes('<link rel="stylesheet" href="assets/studio.css">')||!html.inc
 html=html.replace('<link rel="stylesheet" href="assets/studio.css">',()=>`<style>\n${css}\n</style>`).replace('<script src="assets/studio.js"></script>',()=>`<script>\n${js}\n</script>`);
 const posters=fs.readFileSync(path.join(root,'assets/posters.js'),'utf8').replace(/<\/script/gi,'<\\/script');
 html=html.replace('<script src="assets/posters.js"></script>',()=>`<script>\n${posters}\n</script>`);
-for(const asset of ['assistant-core','workspace','remix','voice','effects/atmosphere','scene-core','scenes']){
+for(const asset of ['assistant-core','workspace','remix','voice','effects/atmosphere','tea-scripts','scene-core','scenes']){
  const source=fs.readFileSync(path.join(root,'assets',asset+'.js'),'utf8').replace(/<\/script/gi,'<\\/script');
  html=html.replace(`<script src="assets/${asset}.js"></script>`,()=>`<script>\n${source}\n</script>`);
 }

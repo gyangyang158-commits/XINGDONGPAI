@@ -24,15 +24,19 @@
 
  let svgSerial=0;
  const wrap=(text,count)=>{const chars=Array.from(text);return Array.from({length:Math.ceil(chars.length/count)},(_,i)=>chars.slice(i*count,(i+1)*count).join(''));};
+ function photoPlacement(photo,opts={}){
+  const finite=(v,fallback)=>Number.isFinite(Number(v))?Number(v):fallback;
+  const layout=opts.layout==='editorial'?'editorial':'frame',p=layout==='frame'?{x:60,y:100,w:480,h:480}:{x:230,y:100,w:310,h:510};
+  const x=Math.max(0,Math.min(100,finite(opts.x,50))),y=Math.max(0,Math.min(100,finite(opts.y,50))),zoom=Math.max(50,Math.min(200,finite(opts.zoom,100)));
+  const w=photo?.width||600,h=photo?.height||800,scale=Math.max(p.w/w,p.h/h)*zoom/100,iw=w*scale,ih=h*scale;
+  return {p,x:p.x-(iw-p.w)/2+(x-50)*p.w/100,y:p.y-(ih-p.h)/2+(y-50)*p.h/100,width:iw,height:ih,zoom};
+ }
  function photoSVG(photo,opts={}){
-  const layout=opts.layout==='editorial'?'editorial':'frame',bounded=(v,min,max,fallback)=>Number.isFinite(Number(v))?Math.max(min,Math.min(max,Number(v))):fallback;
-  const x=bounded(opts.x,0,100,50),y=bounded(opts.y,0,100,50),zoom=bounded(opts.zoom,100,180,100);
-  const p=layout==='frame'?{x:60,y:100,w:480,h:480}:{x:230,y:100,w:310,h:510},clip='scene-photo-'+(++svgSerial);
-  const safe=photo&&imageSafe(photo.url||photo.dataUrl),w=photo?.width||600,h=photo?.height||800,scale=Math.max(p.w/w,p.h/h)*zoom/100,iw=w*scale,ih=h*scale;
-  const px=p.x-(iw-p.w)*x/100,py=p.y-(ih-p.h)*y/100;
+  const layout=opts.layout==='editorial'?'editorial':'frame',g=photoPlacement(photo,opts),p=g.p,clip='scene-photo-'+(++svgSerial);
+  const safe=photo&&imageSafe(photo.url||photo.dataUrl),px=g.x,py=g.y,iw=g.width,ih=g.height;
   const title=clean(opts.title,24)||'把喜欢，留在这里',subtitle=clean(opts.subtitle,45)||'一起完成的这一刻';
   const titleLines=wrap(title,layout==='frame'?14:4),subLines=wrap(subtitle,28);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-label="${layout==='frame'?'纪念相框':'留白刊页'}排版预览"><defs><clipPath id="${clip}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${layout==='frame'?4:14}"/></clipPath></defs><rect width="600" height="800" fill="#E9E0F4"/><circle cx="590" cy="90" r="170" fill="#F2DDEB"/><path d="M0 710Q300 570 600 720V800H0Z" fill="#DAE8F2"/><text x="44" y="48" font-family="sans-serif" font-size="13" fill="#665277" letter-spacing="3">XINGDONGPAI / OUR LITTLE MOMENT</text><rect x="${p.x-16}" y="${p.y-16}" width="${p.w+32}" height="${p.h+32}" fill="#FFFCF6" rx="10"/>${safe?`<image href="${E(photo.url||photo.dataUrl)}" x="${px}" y="${py}" width="${iw}" height="${ih}" clip-path="url(#${clip})"/>`:`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="#D4C3E5"/><text x="${p.x+p.w/2}" y="${p.y+p.h/2}" text-anchor="middle" font-family="sans-serif" font-size="19" fill="#665277">${opts.textOnly?'把心意，留在这一刻':'上传你的照片'}</text>`}<g data-scene-title="true">${titleLines.map((line,i)=>`<text x="${layout==='frame'?56:44}" y="${(layout==='frame'?637:145)+i*(layout==='frame'?38:43)}" font-family="sans-serif" font-size="${layout==='frame'?34:35}" fill="#59426F" font-weight="700">${E(line)}</text>`).join('')}</g><g data-scene-subtitle="true">${subLines.map((line,i)=>`<text x="48" y="${714+i*24}" font-family="sans-serif" font-size="17" fill="#756184">${E(line)}</text>`).join('')}</g><path d="M44 750H556" stroke="#BCA8D1"/><text x="44" y="777" font-family="sans-serif" font-size="11" fill="#756184">CO-CREATION / 照片与文字由参与者提供</text></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-label="${layout==='frame'?'纪念相框':'留白刊页'}排版预览"><defs><clipPath id="${clip}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${layout==='frame'?4:14}"/></clipPath></defs><rect width="600" height="800" fill="#E9E0F4"/><circle cx="590" cy="90" r="170" fill="#F2DDEB"/><path d="M0 710Q300 570 600 720V800H0Z" fill="#DAE8F2"/><text x="44" y="48" font-family="sans-serif" font-size="13" fill="#665277" letter-spacing="3">XINGDONGPAI / OUR LITTLE MOMENT</text><rect x="${p.x-16}" y="${p.y-16}" width="${p.w+32}" height="${p.h+32}" fill="#FFFCF6" rx="10"/>${safe?`<image data-scene-image="true" href="${E(photo.url||photo.dataUrl)}" x="${px}" y="${py}" width="${iw}" height="${ih}" clip-path="url(#${clip})"/>`:`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="#D4C3E5"/><text x="${p.x+p.w/2}" y="${p.y+p.h/2}" text-anchor="middle" font-family="sans-serif" font-size="19" fill="#665277">${opts.textOnly?'把心意，留在这一刻':'上传你的照片'}</text>`}<g data-scene-title="true">${titleLines.map((line,i)=>`<text x="${layout==='frame'?56:44}" y="${(layout==='frame'?637:145)+i*(layout==='frame'?38:43)}" font-family="sans-serif" font-size="${layout==='frame'?34:35}" fill="#59426F" font-weight="700">${E(line)}</text>`).join('')}</g><g data-scene-subtitle="true">${subLines.map((line,i)=>`<text x="48" y="${714+i*24}" font-family="sans-serif" font-size="17" fill="#756184">${E(line)}</text>`).join('')}</g><path d="M44 750H556" stroke="#BCA8D1"/><text x="44" y="777" font-family="sans-serif" font-size="11" fill="#756184">CO-CREATION / 照片与文字由参与者提供</text></svg>`;
  }
 
  function retitle(svg,title,subtitle){
@@ -47,5 +51,5 @@
   if(layers.length&&stickerSVG)result=result.replace('</svg>',`<!--SCENE-EXTRAS--><g>${layers.map(l=>`<g transform="translate(${l.x} ${l.y}) scale(.6)">${stickerSVG(l.type)}</g>`).join('')}</g><!--/SCENE-EXTRAS--></svg>`);
   return {svg:result,layers,changed,note};
  }
- const api={scenes,tips,clean,safeLink,localReply,summary,imageSafe,photoSVG,retitle,revise};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.XDPScenes=api;
+ const api={scenes,tips,clean,safeLink,localReply,summary,imageSafe,photoPlacement,photoSVG,retitle,revise};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.XDPScenes=api;
 })(typeof window!=='undefined'?window:this);

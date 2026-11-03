@@ -1,4 +1,4 @@
-/* 星动派 Studio: presentation layer over the original, local-only prototype. */
+/* 设计助手 Studio: presentation layer over the original, local-only prototype. */
 'use strict';
 const STUDIO_ICONS = {
   grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
@@ -44,7 +44,7 @@ function paintStudioShell(){
  const aside=$('#studio-sidebar'); if(!aside)return;
  const cur=S.stage===1?'home':S.stage>=3?'delivery':S.boardView;
  const nav=(v,label,icon,count)=>`<button class="studio-nav ${cur===v?'active':''}" data-act="studio-nav" data-v="${v}" ${cur===v?'aria-current="page"':''}>${uiIcon(icon)}<span>${label}</span>${count!=null?`<small>${count}</small>`:''}</button>`;
- aside.innerHTML=`<button class="studio-brand" data-act="home" aria-label="星动派项目概览"><span class="studio-logomark">${uiIcon('logo',23)}</span><span>星动派<small>CO-CREATION STUDIO</small></span></button>
+ aside.innerHTML=`<button class="studio-brand" data-act="home" aria-label="设计助手项目概览"><span class="studio-logomark">${uiIcon('logo',23)}</span><span>设计助手<small>CO-CREATION STUDIO</small></span></button>
  <div class="sidebar-section-label">共创空间</div><div class="sidebar-project"><span class="sidebar-project-cover">${studioCover()}</span><span><b>赵露思生日生咖</b><small>海报共创 · 第一期</small></span></div>
  <nav aria-label="工作区导航">${nav('home','项目概览','grid')}${nav('pool','灵感收集','note',S.pool.length)}<button class="studio-nav" data-act="studio-open-templates">${uiIcon('image')}<span>海报模板</span><small>6</small></button>${nav('done','稿件评审','image',S.arts.length)}${nav('delivery','交付归档','layers')}</nav>
  <div class="sidebar-rule"></div><div class="sidebar-section-label">一起完成</div><div class="sidebar-members">${avStack(['lu','t0','yao','maggie'],4)}<span>${S.people.length} 位演示成员</span></div><p class="sidebar-note">想法留下来源，<br>每一次决定都有记录。</p>
