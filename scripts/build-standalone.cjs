@@ -10,13 +10,14 @@ if(!html.includes('<link rel="stylesheet" href="assets/studio.css">')||!html.inc
 html=html.replace('<link rel="stylesheet" href="assets/studio.css">',()=>`<style>\n${css}\n</style>`).replace('<script src="assets/studio.js"></script>',()=>`<script>\n${js}\n</script>`);
 const posters=fs.readFileSync(path.join(root,'assets/posters.js'),'utf8').replace(/<\/script/gi,'<\\/script');
 html=html.replace('<script src="assets/posters.js"></script>',()=>`<script>\n${posters}\n</script>`);
-for(const asset of ['assistant-core','workspace','remix','voice','effects/atmosphere']){
+for(const asset of ['assistant-core','workspace','remix','voice','effects/atmosphere','scene-core','scenes']){
  const source=fs.readFileSync(path.join(root,'assets',asset+'.js'),'utf8').replace(/<\/script/gi,'<\\/script');
  html=html.replace(`<script src="assets/${asset}.js"></script>`,()=>`<script>\n${source}\n</script>`);
 }
 html=html.replace('<link rel="stylesheet" href="assets/workspace.css">',()=>`<style>\n${fs.readFileSync(path.join(root,'assets/workspace.css'),'utf8')}\n</style>`);
 html=html.replace('<link rel="stylesheet" href="assets/effects/atmosphere.css">',()=>`<style>\n${fs.readFileSync(path.join(root,'assets/effects/atmosphere.css'),'utf8')}\n</style>`);
 html=html.replace('<link rel="stylesheet" href="assets/remix.css">',()=>`<style>\n${fs.readFileSync(path.join(root,'assets/remix.css'),'utf8')}\n</style>`);
+html=html.replace('<link rel="stylesheet" href="assets/scenes.css">',()=>`<style>\n${fs.readFileSync(path.join(root,'assets/scenes.css'),'utf8')}\n</style>`);
 const shaderLicense=fs.readFileSync(path.join(root,'assets/effects/SHADERS-LICENSE.txt'),'utf8').replace(/--/g,'—');
 html=html.replace('</head>',`<!-- Shader Effects Inc. visual research attribution; local implementation.\n${shaderLicense}\n-->\n</head>`);
 const license=fs.readFileSync(path.join(root,'assets/fonts/OFL.txt'),'utf8').replace(/--/g,'—')+'\n'+fs.readFileSync(path.join(root,'assets/fonts/PosterSerif-OFL.txt'),'utf8').replace(/--/g,'—');

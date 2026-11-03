@@ -3,6 +3,7 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const {context,normalizePlan,KEYS}=require('../assets/assistant-core.js');
 const {createMediaRoutes}=require('./media-routes.cjs');
+const {createSceneRoutes}=require('./scene-routes.cjs');
 const ROOT=path.resolve(__dirname,'..');
 function loadKey(env){
  if(env.XDP_AI_KEY)return env.XDP_AI_KEY;
@@ -10,7 +11,7 @@ function loadKey(env){
  const raw=fs.readFileSync(env.XDP_AI_KEY_FILE,'utf8').replace(/^\uFEFF/,'');
  return (raw.match(/^\s*(?:API_KEY|XDP_AI_KEY)\s*=\s*["']?([^\s"']+)/m)||[])[1]||'';
 }
-function config(env=process.env){return {key:loadKey(env),model:env.XDP_AI_MODEL||'deepseek-v4.1-flash',base:env.XDP_AI_BASE||'https://api.lk888.ai/api',port:Number(env.PORT||8772),voiceModel:env.XDP_VOICE_MODEL||'gem-3.5-flash-lite',cutoutModel:env.XDP_CUTOUT_MODEL||path.join(ROOT,'.cache/models/u2netp.onnx'),python:env.XDP_PYTHON||'python'};}
+function config(env=process.env){return {key:loadKey(env),model:env.XDP_AI_MODEL||'deepseek-v4.1-flash',base:env.XDP_AI_BASE||'https://api.lk888.ai/api',port:Number(env.PORT||8772),voiceModel:env.XDP_VOICE_MODEL||'gem-3.5-flash-lite',sceneVisionModel:env.XDP_SCENE_VISION_MODEL||'gem-3.5-flash-lite',cutoutModel:env.XDP_CUTOUT_MODEL||path.join(ROOT,'.cache/models/u2netp.onnx'),python:env.XDP_PYTHON||'python'};}
 function safeFile(urlPath){
  let decoded;try{decoded=decodeURIComponent(urlPath);}catch{return null;}
  if(decoded.includes('\\')||decoded.includes('\0'))return null;
@@ -21,7 +22,7 @@ function safeFile(urlPath){
  const full=path.resolve(ROOT,'.'+name);return full.startsWith(ROOT+path.sep)?full:null;
 }
 function createServer(cfg=config(),fetcher=fetch){
- let busy=false;const times=[];const media=createMediaRoutes(cfg,fetcher);
+ let busy=false;const times=[];const media=createMediaRoutes(cfg,fetcher),scenes=createSceneRoutes(cfg,fetcher);
  const json=(res,code,value)=>{res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
  return http.createServer(async(req,res)=>{
   const origin=`http://${req.headers.host}`;
@@ -29,6 +30,7 @@ function createServer(cfg=config(),fetcher=fetch){
   if(!['127.0.0.1','localhost'].includes(host)||(req.headers.origin&&req.headers.origin!==origin))return json(res,403,{error:'仅允许本机同源访问。'});
   const url=new URL(req.url,origin);
   if(req.method==='GET'&&url.pathname==='/api/agent/status')return json(res,200,{configured:!!cfg.key,provider:'银河智算',model:cfg.key?cfg.model:null,...media.status()});
+  if(await scenes.handle(req,res,url,json))return;
   if(await media.handle(req,res,url,json))return;
   if(req.method==='POST'&&url.pathname==='/api/agent/run'){
    if(!cfg.key)return json(res,503,{error:'服务端尚未配置 AI 密钥，可使用离线整理。'});
