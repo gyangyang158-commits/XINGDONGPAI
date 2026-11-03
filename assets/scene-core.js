@@ -26,13 +26,13 @@
  const wrap=(text,count)=>{const chars=Array.from(text);return Array.from({length:Math.ceil(chars.length/count)},(_,i)=>chars.slice(i*count,(i+1)*count).join(''));};
  function photoPlacement(photo,opts={}){
   const finite=(v,fallback)=>Number.isFinite(Number(v))?Number(v):fallback;
-  const layout=opts.layout==='editorial'?'editorial':'frame',p=layout==='frame'?{x:60,y:100,w:480,h:480}:{x:230,y:100,w:310,h:510};
+  const layout=['editorial','panorama'].includes(opts.layout)?opts.layout:'frame',p=layout==='panorama'?{x:60,y:200,w:480,h:350}:layout==='frame'?{x:60,y:100,w:480,h:480}:{x:230,y:100,w:310,h:510};
   const x=Math.max(0,Math.min(100,finite(opts.x,50))),y=Math.max(0,Math.min(100,finite(opts.y,50))),zoom=Math.max(50,Math.min(200,finite(opts.zoom,100)));
   const w=photo?.width||600,h=photo?.height||800,scale=Math.max(p.w/w,p.h/h)*zoom/100,iw=w*scale,ih=h*scale;
   return {p,x:p.x-(iw-p.w)/2+(x-50)*p.w/100,y:p.y-(ih-p.h)/2+(y-50)*p.h/100,width:iw,height:ih,zoom};
  }
  function photoSVG(photo,opts={}){
-  const layout=opts.layout==='editorial'?'editorial':'frame',g=photoPlacement(photo,opts),p=g.p,clip='scene-photo-'+(++svgSerial);
+  const layout=['editorial','panorama'].includes(opts.layout)?opts.layout:'frame',g=photoPlacement(photo,opts),p=g.p,clip='scene-photo-'+(++svgSerial);
   const safe=photo&&imageSafe(photo.url||photo.dataUrl),px=g.x,py=g.y,iw=g.width,ih=g.height;
   const title=clean(opts.title,24)||'把喜欢，留在这里',subtitle=clean(opts.subtitle,45)||'一起完成的这一刻';
   const titleLines=wrap(title,layout==='frame'?14:4),subLines=wrap(subtitle,28);
