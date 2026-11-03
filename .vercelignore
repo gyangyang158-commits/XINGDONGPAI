@@ -1,0 +1,12 @@
+.git
+.vercel
+.env
+.env.*
+.cache
+.venv
+node_modules
+tests
+docs
+work
+outputs
+xingdongpai-room-mobile-fixed(1).html

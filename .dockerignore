@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+.cache
+.venv
+node_modules
+work
+outputs
+docs/screenshots
+tests

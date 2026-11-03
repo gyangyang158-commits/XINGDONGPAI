@@ -1,6 +1,7 @@
 /* 设计助手 Studio: presentation layer over the original, local-only prototype. */
 'use strict';
 const STUDIO_ICONS = {
+  mic:'M9 5a3 3 0 0 1 6 0v7a3 3 0 0 1-6 0V5Z M5 10v2a7 7 0 0 0 14 0v-2 M12 19v3 M8 22h8',
   grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
   layers:'m12 3 10 6-10 6L2 9 12 3Z M3 13l9 5 9-5 M3 17l9 5 9-5',
   image:'M4 3h16v18H4z M4 15l5-5 5 6 3-3 3 4 M15 7h.01',

@@ -1,9 +1,11 @@
-/* Loopback-only gateway. Credentials never enter the HTML or browser bundle. */
+/* Same-origin gateway; loopback by default, authenticated HTTPS deployment is opt-in. */
 'use strict';
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const {context,normalizePlan,KEYS}=require('../assets/assistant-core.js');
 const {createMediaRoutes}=require('./media-routes.cjs');
 const {createSceneRoutes}=require('./scene-routes.cjs');
+const {deploymentConfig,createPolicy,readJSON}=require('./gateway-policy.cjs');
+const accessPage=require('./access-page.cjs');
 const ROOT=path.resolve(__dirname,'..');
 function loadKey(env){
  if(env.XDP_AI_KEY)return env.XDP_AI_KEY;
@@ -11,25 +13,47 @@ function loadKey(env){
  const raw=fs.readFileSync(env.XDP_AI_KEY_FILE,'utf8').replace(/^\uFEFF/,'');
  return (raw.match(/^\s*(?:API_KEY|XDP_AI_KEY)\s*=\s*["']?([^\s"']+)/m)||[])[1]||'';
 }
-function config(env=process.env){return {key:loadKey(env),model:env.XDP_AI_MODEL||'deepseek-v4.1-flash',base:env.XDP_AI_BASE||'https://api.lk888.ai/api',port:Number(env.PORT||8772),voiceModel:env.XDP_VOICE_MODEL||'gem-3.5-flash-lite',sceneVisionModel:env.XDP_SCENE_VISION_MODEL||'gem-3.5-flash-lite',sceneVisionFormat:env.XDP_SCENE_VISION_FORMAT||'gemini',referenceSearch:env.XDP_REFERENCE_SEARCH!=='off',cutoutModel:env.XDP_CUTOUT_MODEL||path.join(ROOT,'.cache/models/u2netp.onnx'),python:env.XDP_PYTHON||'python'};}
+function config(env=process.env){return {...deploymentConfig(env),sessionSecret:env.XDP_SESSION_SECRET||'',key:loadKey(env),model:env.XDP_AI_MODEL||'deepseek-v4.1-flash',base:env.XDP_AI_BASE||'https://api.lk888.ai/api',port:Number(env.PORT||8772),voiceModel:env.XDP_VOICE_MODEL==='off'?'':env.XDP_VOICE_MODEL||'gem-3.5-flash-lite',sceneVisionModel:env.XDP_SCENE_VISION_MODEL||'gem-3.5-flash-lite',sceneVisionFormat:env.XDP_SCENE_VISION_FORMAT||'gemini',referenceSearch:env.XDP_REFERENCE_SEARCH!=='off',cutoutModel:env.XDP_CUTOUT_MODEL||path.join(ROOT,'.cache/models/u2netp.onnx'),python:env.XDP_PYTHON||'python'};}
 function safeFile(urlPath){
  let decoded;try{decoded=decodeURIComponent(urlPath);}catch{return null;}
  if(decoded.includes('\\')||decoded.includes('\0'))return null;
  const parts=decoded.split('/');
- if(parts.some(x=>x.startsWith('.')||['scripts','tests','node_modules'].includes(x)))return null;
+ if(parts.some(x=>x.startsWith('.')||['scripts','tests','node_modules','work','outputs'].includes(x)))return null;
  const name=decoded==='/'?'/xingdongpai-room-optimized.html':decoded;
  if(!/\.(?:html|js|css|svg|ttf|jpg|png|webp|txt)$/i.test(name))return null;
  const full=path.resolve(ROOT,'.'+name);return full.startsWith(ROOT+path.sep)?full:null;
 }
 function createServer(cfg=config(),fetcher=fetch){
+ const policy=createPolicy(cfg);
  let busy=false;const times=[];const media=createMediaRoutes(cfg,fetcher),scenes=createSceneRoutes(cfg,fetcher);
  const json=(res,code,value)=>{res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
- return http.createServer(async(req,res)=>{
-  const origin=`http://${req.headers.host}`;
-  const host=(req.headers.host||'').split(':')[0];
-  if(!['127.0.0.1','localhost'].includes(host)||(req.headers.origin&&req.headers.origin!==origin))return json(res,403,{error:'仅允许本机同源访问。'});
-  const url=new URL(req.url,origin);
-  if(req.method==='GET'&&url.pathname==='/api/agent/status')return json(res,200,{configured:!!cfg.key,provider:'银河智算',model:cfg.key?cfg.model:null,...media.status()});
+ const server=http.createServer(async(req,res)=>{
+  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');
+  res.setHeader('X-Frame-Options','DENY');res.setHeader('Content-Security-Policy',"frame-ancestors 'none'");
+  res.setHeader('Cross-Origin-Resource-Policy','same-origin');res.setHeader('Permissions-Policy','camera=(), geolocation=(), microphone=(self)');
+  if(policy.deployed)res.setHeader('Strict-Transport-Security','max-age=31536000');
+  try{
+  const origin=policy.origin(req),url=new URL(req.url,origin);
+  if(req.method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'design-assistant',apiVersion:1});
+  if(url.pathname==='/api/session'){
+   if(req.method==='GET')return json(res,200,{authenticated:policy.authorized(req),required:policy.accessRequired});
+   if(req.method==='POST'){
+    if(!policy.accessRequired)return json(res,200,{authenticated:true});
+    const data=await readJSON(req,2048);res.setHeader('Set-Cookie',policy.login(data.accessCode));return json(res,200,{authenticated:true});
+   }
+   if(req.method==='DELETE'){res.setHeader('Set-Cookie',policy.logout());return json(res,200,{authenticated:!policy.accessRequired});}
+   return json(res,405,{error:'不支持的请求。'});
+  }
+  if(url.pathname==='/access'&&['GET','HEAD'].includes(req.method)){
+   if(!policy.accessRequired){res.writeHead(303,{Location:'/','Cache-Control':'no-store'});return res.end();}
+   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});return res.end(req.method==='HEAD'?'':accessPage);
+  }
+  if(!policy.authorized(req)){
+   if(!url.pathname.startsWith('/api/')&&['GET','HEAD'].includes(req.method)){res.writeHead(303,{Location:'/access','Cache-Control':'no-store'});return res.end();}
+   return json(res,401,{error:'请先输入访问码登录。'});
+  }
+  if(url.pathname.startsWith('/api/')&&req.method==='POST')policy.limitAPI();
+  if(req.method==='GET'&&url.pathname==='/api/agent/status')return json(res,200,{configured:!!cfg.key,provider:'银河智算',model:cfg.key?cfg.model:null,referenceSearchConfigured:cfg.referenceSearch===true,accessRequired:policy.accessRequired,...media.status()});
   if(await scenes.handle(req,res,url,json))return;
   if(await media.handle(req,res,url,json))return;
   if(req.method==='POST'&&url.pathname==='/api/agent/run'){
@@ -64,11 +88,15 @@ function createServer(cfg=config(),fetcher=fetch){
   if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'不支持的请求。'});
   const file=safeFile(url.pathname);if(!file)return json(res,404,{error:'文件不存在。'});
   try{
-   const stat=fs.statSync(file);if(!stat.isFile())throw Error();
+   const real=fs.realpathSync(file);if(real!==file&&!safeFile('/'+path.relative(ROOT,real).split(path.sep).join('/')))throw Error();
+   if(!real.startsWith(ROOT+path.sep))throw Error();const stat=fs.statSync(real);if(!stat.isFile())throw Error();
    const type={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ttf':'font/ttf','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.txt':'text/plain; charset=utf-8'}[path.extname(file).toLowerCase()];
-   res.writeHead(200,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'});if(req.method==='HEAD')res.end();else fs.createReadStream(file).pipe(res);
+   res.writeHead(200,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'});if(req.method==='HEAD')res.end();else fs.createReadStream(file).on('error',()=>res.destroy()).pipe(res);
   }catch{json(res,404,{error:'文件不存在。'});}
+  }catch(e){if(!res.headersSent){if(e.status===429)res.setHeader('Retry-After','60');json(res,e.status||500,{error:e.status?e.message:'服务暂时不可用，请稍后再试。'});}else res.destroy();}
  });
+ server.requestTimeout=180000;server.headersTimeout=15000;server.keepAliveTimeout=5000;server.maxRequestsPerSocket=100;
+ return server;
 }
-if(require.main===module){if(fs.existsSync(path.join(ROOT,'.env'))&&typeof process.loadEnvFile==='function')process.loadEnvFile(path.join(ROOT,'.env'));const cfg=config();createServer(cfg).listen(cfg.port,'127.0.0.1',()=>console.log(`Studio: http://127.0.0.1:${cfg.port} · AI ${cfg.key?'configured':'not configured'}`));}
+if(require.main===module){if(fs.existsSync(path.join(ROOT,'.env'))&&typeof process.loadEnvFile==='function')process.loadEnvFile(path.join(ROOT,'.env'));const cfg=config();createServer(cfg).listen(cfg.port,cfg.host,()=>console.log(`Studio: ${cfg.publicOrigin||'http://'+cfg.host+':'+cfg.port} · AI ${cfg.key?'configured':'not configured'}`));}
 module.exports={createServer,config,safeFile};

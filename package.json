@@ -1,0 +1,14 @@
+{
+  "name": "design-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Same-origin design co-creation UI and protected AI gateway",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "node --use-env-proxy --env-file-if-exists=.env scripts/serve-studio.cjs",
+    "build": "node scripts/build-standalone.cjs",
+    "test": "node --test tests/*.test.cjs"
+  }
+}

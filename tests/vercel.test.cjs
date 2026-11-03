@@ -1,0 +1,13 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),http=require('node:http');
+const {createServer}=require('../scripts/serve-studio.cjs');
+const source=fs.readFileSync(require.resolve('../api/index.js'),'utf8');
+const cfg={publicOrigin:'https://design.example.com',accessCode:'TEST_ONLY_ACCESS_CODE_123456789',sessionSecret:'TEST_ONLY_STABLE_SESSION_SECRET_123456789',key:'',referenceSearch:false};
+function adapter(options=cfg){const context={module:{exports:{}},Buffer,require:name=>{assert.equal(name,'../scripts/serve-studio.cjs');return {createServer,config:()=>options};}};vm.runInNewContext(source,context);return context.module.exports;}
+async function run(handler,fn){const server=http.createServer((req,res)=>handler(req,res));await new Promise(r=>server.listen(0,'127.0.0.1',r));try{await fn(server.address().port);}finally{await new Promise(r=>server.close(r));}}
+function call(port,url,body){return new Promise((resolve,reject)=>{const req=http.request({hostname:'127.0.0.1',port,path:url,method:body===undefined?'GET':'POST',headers:{Host:'design.example.com',...(body===undefined?{}:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(JSON.stringify(body))})}},res=>{let text='';res.on('data',b=>text+=b);res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,text}));});req.on('error',reject);req.end(body===undefined?undefined:JSON.stringify(body));});}
+test('serverless adapter fails closed when public origin or stable session signing is absent',()=>run(adapter({...cfg,sessionSecret:''}),async port=>{assert.equal((await call(port,'/api/health')).status,503);}));
+test('serverless adapter serves health and enforces access before model routes',()=>run(adapter(),async port=>{assert.equal((await call(port,'/api/health')).status,200);assert.equal((await call(port,'/api/agent/status')).status,401);}));
+test('serverless pre-parsed JSON bodies are restored to the gateway input stream',()=>{const handle=adapter();return run((req,res)=>{req.body={accessCode:cfg.accessCode};return handle(req,res);},async port=>{const r=await call(port,'/api/session',{accessCode:cfg.accessCode});assert.equal(r.status,200);assert.ok(r.headers['set-cookie'][0].includes('HttpOnly'));});});
+
+test('serverless public mode serves the app anonymously without a session secret',()=>run(adapter({...cfg,accessMode:'public',accessCode:'',sessionSecret:''}),async port=>{assert.equal((await call(port,'/')).status,200);const status=await call(port,'/api/agent/status');assert.equal(status.status,200);assert.equal(JSON.parse(status.text).accessRequired,false);}));
