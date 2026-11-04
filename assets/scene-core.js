@@ -51,5 +51,44 @@
   if(layers.length&&stickerSVG)result=result.replace('</svg>',`<!--SCENE-EXTRAS--><g>${layers.map(l=>`<g transform="translate(${l.x} ${l.y}) scale(.6)">${stickerSVG(l.type)}</g>`).join('')}</g><!--/SCENE-EXTRAS--></svg>`);
   return {svg:result,layers,changed,note};
  }
- const api={scenes,tips,clean,safeLink,localReply,summary,imageSafe,photoPlacement,photoSVG,retitle,revise};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.XDPScenes=api;
+ const gameQuests=[
+  {id:'direction',title:'点亮一个方向',points:10,tip:'确认用途和必留元素，私聊确认也算，不要求公开。',cheer:'有感觉了！第一束灵感，点亮。'},
+  {id:'collage',title:'留下一张作品',points:15,tip:'用真实图片拼出一版，确认留为稿件；改回原样不重复计分。',cheer:'嘿，脑子里的画面真的落地了。'},
+  {id:'feedback',title:'送出具体观察',points:5,tip:'在比稿细项中留下至少 6 个文字或数字的观察（不含空格、标点、表情）；同一关只奖励一次。',cheer:'这条观察我收好啦，留给下一版一起试！'}
+ ];
+ const gamePrompts=['如果只能留下一个最有感觉的元素，你会留下哪一个？','试着把一张图的颜色，借给另一张图里的文字，会发生什么？','假如这张海报是一封邀请，你最希望朋友先看见哪一句？'];
+ const gameFeedbackEligible=text=>(String(text||'').match(/[\p{L}\p{N}]/gu)||[]).length>=6;
+ const gameRank=count=>count>=3?'共创探索家':count>=2?'灵感搭子':count>=1?'方向点亮者':'灵感见习生';
+ const audiences=[
+  {id:'ready',label:'我有明确想法',hint:'先说方向，少绕路；需要时再看感觉板。'},
+  {id:'guided',label:'有想法，但不会动手',hint:'把想法拆成一小步一小步，再带你拼出来。'},
+  {id:'explore',label:'还没有想法',hint:'从一个词、一个场景开始，不急着出稿。'}
+ ];
+ const moods=[
+  {id:'soft',label:'温柔纪念',words:'轻柔 · 亲近 · 像一封信',colors:['#E4D8EE','#FFF9EF','#765B88'],tip:'浅色大面积，装饰集中在一处。'},
+  {id:'night',label:'舞台能量',words:'聚光 · 对比 · 有力量',colors:['#282337','#E7D4A0','#D6BDDF'],tip:'深色托住主角，只留一个醒目的标题。'},
+  {id:'fresh',label:'轻快日常',words:'明亮 · 松弛 · 像朋友相聚',colors:['#DBE9DE','#FFF7E8','#5D7568'],tip:'照片和短句错落，不把所有位置填满。'}
+ ];
+ function newGuidance(){return {audience:null,stage:'intent',intent:'',feeling:'',details:'',mood:null,confirmed:false,rights:'pending',referenceRequested:false,saved:null,sourceIds:[]};}
+ function guidePrompt(g){
+  if(!g.audience)return '先跟我对个暗号：你现在更接近哪一种状态？点上面的选项就好，随时能改。';
+  if(g.stage==='intent')return g.audience==='ready'?'好，你带着主意来了！这次想做给谁、用在什么场合？已经想好的方向也可以一起说。':g.audience==='guided'?'脑子里的画面，先借我一小角：你已经想好的那一点是什么？一句话就好，不用讲术语。':'没想法也 OK，我们先捡一个小起点：想纪念一个瞬间，送一句祝福，还是做一张聚会海报？';
+  if(g.stage==='feeling')return '有个起点了！你希望它带来什么感觉？下面的情绪板可以先碰一碰，不对味就自己写个词。';
+  if(g.stage==='details')return g.audience==='guided'?'咱们先拆一小步：你最想保留哪个元素，又最不想出现什么？':'方向有了，来划个重点：画面里一定要留下什么，或者有什么不想出现的？';
+  if(g.stage==='confirm')return '我把刚才的感觉装进这张想法卡了，是你的意思吗？不对就改，点头以后咱们再找图。';
+  return '这版方向先点亮！接下来可以找图、去灵感池挑原料，或者再拧一拧想法——你说了算。';
+ }
+ function guideAdvance(g,text){
+  const value=clean(text,600);if(!g.audience)return guidePrompt(g);
+  g.saved=null;g.referenceRequested=false;
+  if(g.stage==='intent'){g.intent=value;g.stage=g.audience==='ready'?'details':'feeling';}
+  else if(g.stage==='feeling'){g.feeling=value;g.mood=null;g.stage='details';}
+  else if(g.stage==='details'){g.details=value;g.stage='confirm';}
+  else {g.details=clean((g.details?g.details+'；':'')+value,1000);g.stage='confirm';g.confirmed=false;}
+  return guidePrompt(g);
+ }
+ function guideBrief(g){return [g.intent,g.feeling&&'感觉：'+g.feeling,g.details&&'保留/避开：'+g.details].filter(Boolean).join('；');}
+ function referenceAllowed(g){return !!g&&g.confirmed===true&&g.stage==='collected'&&g.referenceRequested===true;}
+ function spark(messages){const m=messages.filter(x=>x.role==='user'&&x.text).slice(-8);return {text:m.length?'一个待确认的新提议：把「'+clean(m[0].text,50)+'」'+(m.length>1?'和「'+clean(m.at(-1).text,50)+'」':'')+'拆成主视觉与陪衬元素，先各留一版，再比较哪个更接近想表达的感觉。大家愿意先试哪一个？':'先听听大家的一句想法，再从真实讨论里找交叉点。',sourceIds:m.map(x=>x.id)};}
+ const api={gameQuests,gamePrompts,gameRank,gameFeedbackEligible,audiences,moods,newGuidance,guidePrompt,guideAdvance,guideBrief,referenceAllowed,spark,scenes,tips,clean,safeLink,localReply,summary,imageSafe,photoPlacement,photoSVG,retitle,revise};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.XDPScenes=api;
 })(typeof window!=='undefined'?window:this);

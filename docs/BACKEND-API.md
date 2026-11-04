@@ -153,3 +153,7 @@ tea 首条需求或明确找参考时可自动搜索。返回 reply、highlight�
 
 - 发布后无 Cookie、无 Authorization 实测：首页 HTTP 200；/access 返回 303 到 /；状态 accessRequired=false；真实文字 AI 请求 HTTP 200。
 - 本轮内置浏览器导航遇到连接超时，未将此次浏览器复验记为通过；未绕过浏览器安全策略。
+
+## 当前茶话流程覆盖说明
+
+首条消息不再自动找参考。`channel` 和 `guidance` 的状态、确认后主动检索、群聊/私聊本页隔离及尚未接入真实多人权限的边界，以 [逐步引导说明](STEPWISE-INSPIRATION.md) 为准。

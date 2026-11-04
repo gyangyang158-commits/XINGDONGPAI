@@ -27,6 +27,6 @@
    {role:'assistant',speaker:'AI 设计助手',text:'可以，先用自己的实拍商品图试一张留白刊页。想再加人物或小贴纸，可以留稿后进入完整二创；成图之后我们再一起看。',adapted:true,action:'look',layout:'editorial'}]}
  ];
  function scenario(id){return scenarios.find(s=>s.id===id)||scenarios[0];}
- function opening(id){const s=scenario(id);return {id:'opening-'+s.id,role:'assistant',engine:'script',text:s.greeting,scripted:true};}
+ function opening(id){const s=scenario(id);return {id:'opening-'+s.id,role:'assistant',engine:'script',text:'Hello，让我们今天来创造点什么吧！我是阿浣，你的 AI 灵感搭子。这里聊'+s.label+'：有主意就带来，脑袋空空也能开局。先选个状态，咱们一步一步来。',scripted:true};}
  const api={scenarios,scenario,opening};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.XDPTeaScripts=api;
 })(typeof window!=='undefined'?window:this);
